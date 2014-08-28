@@ -22,7 +22,16 @@ System.prototype.platform = function() {
     }
 }
 
-
+System.prototype.writeFile = function(filePath, str) {
+    try {
+        var f = new File(filePath);
+        f.open('w');
+        f.write(str);
+        f.close();
+    } catch (e) {
+        return false
+    }
+}
 
 //
 // Photoshop Doc Class
@@ -31,6 +40,7 @@ System.prototype.platform = function() {
 function Doc(settings) {
     // User settings
     this.settings = settings
+    this.system = new System()
 
 }
 
@@ -56,19 +66,16 @@ Doc.prototype.saveIMG = function() {
 
 Doc.prototype.saveJPG = function() {
         var opts, file;
-
         opts = new ExportOptionsSaveForWeb();
         opts.format = SaveDocumentType.JPEG;
         opts.includeProfile = false ;
         opts.quality = this.settings["jpgQuality"];
-
         file = new File(this.settings["tempDir"] + "/" + this.settings["baseFileName"] + ".jpg");
         activeDocument.exportDocument(file, ExportType.SAVEFORWEB, opts);
 }
 
 Doc.prototype.savePNG = function(outputFolderStr, filename) {
         var opts, file;
-
         opts = new ExportOptionsSaveForWeb();
         opts.format = SaveDocumentType.PNG;
         opts.transparency = true
@@ -78,9 +85,9 @@ Doc.prototype.savePNG = function(outputFolderStr, filename) {
         opts.optimized = true
         opts.quality = 100
         opts.PNG8 = false
-
         file = new File(this.settings["tempDir"] + "/" + this.settings["baseFileName"] + ".png");
-        activeDocument.exportDocument(file, ExportType.SAVEFORWEB, opts);}
+        activeDocument.exportDocument(file, ExportType.SAVEFORWEB, opts);
+}
 
 
 
@@ -118,24 +125,24 @@ Previz.prototype.setTempDir = function() {
     } else {
         this.settings["tempDir"] = this.settings["dropboxWinFolder"]
     }
+
+    // Construct file paths
+    this.baseFilePath = this.settings["tempDir"] + this.settings["baseFileName"]
+    this.shFile = this.baseFilePath + ".sh"
+    this.htmlFile = this.baseFilePath + ".html"
+    this.imageFile = this.baseFilePath + this.settings["format"]
+    this.batFile = this.baseFilePath + ".bat"
+    this.vbsFile = this.baseFilePath + ".vbs"
 }
 
 Previz.prototype.writeScriptFile = function() {
     if (this.platform == "osx") {
-        var f = new File(this.settings["tempDir"] + this.settings["baseFileName"] + ".sh")
-        f.open("w")
-        f.write("open " + this.settings["tempDir"] + this.settings["baseFileName"] + ".html")
-        f.close()
-    } else if (this.platform == "win") {
-        var f = new File(this.settings["tempDir"] + this.settings["baseFileName"] + ".bat")
-        f.open('w');
-        f.write("@echo off\nstart " + this.settings["tempDir"] + this.settings["baseFileName"] + ".html");
-        f.close();
-        // VBS file. Hides the windows terminal when its open .bat
-        var f = new File(this.settings["tempDir"] + "/" + this.settings["baseFileName"] + ".vbs");
-        f.open('w');
-        f.write('CreateObject("Wscript.Shell").Run "'+ this.settings["tempDir"] + this.settings["baseFileName"] + ".bat" +'", 0, True');
-        f.close();
+        this.system.writeFile( this.shFile, "open " + this.htmlFile )
+    }
+
+    if (this.platform == "win") {
+        this.system.writeFile( this.batFile, "@echo off\nstart " + this.htmlFile )
+        this.system.writeFile( this.vbsFile, 'CreateObject("Wscript.Shell").Run "'+ this.batFile +'", 0, True' )
     }
 }
 
@@ -196,7 +203,7 @@ Previz.prototype.go = function() {
         // Get system
         this.platform = new System().platform()        
 
-        // Set correct temp dir
+        // Set correct (os related) temp dir and file paths
         this.setTempDir()
 
         // Image file export
@@ -219,10 +226,3 @@ Previz.prototype.go = function() {
 
 // Main
 var previz = new Previz("jpg").go()
-
-
-
-
-
-
-
