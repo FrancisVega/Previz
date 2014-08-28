@@ -28,23 +28,9 @@ System.prototype.platform = function() {
 // Photoshop Doc Class
 //
 
-function Doc(format) {
-
-    // Export format
-    this.format = format
-
+function Doc(settings) {
     // User settings
-    this.settings = {
-        "title":"Presentacion",
-        "dropboxiMacFolder": "/Volumes/Bucanero/Dropbox\ \(Secuoyas\)/Public/sandbox2/",
-        "dropboxWinFolder": "/",
-        "tempDir": "",
-        "tempSystemDir": Folder.temp.fsName+"/",
-        "jpgQuality":80,
-        "baseFileName":"previz",
-        "imageFormat":"jpg",
-        "ext":""
-    }
+    this.settings = settings
 
 }
 
@@ -55,6 +41,17 @@ Doc.prototype.isOpen = function() {
     if(app.documents.length==0)
         return false
     return true
+}
+
+Doc.prototype.saveIMG = function() {
+    switch(this.settings["format"]) {
+        case "jpg":
+            this.saveJPG()
+            break;
+        case "png":
+            this.savePNG()
+            break;
+    }
 }
 
 Doc.prototype.saveJPG = function() {
@@ -85,18 +82,45 @@ Doc.prototype.savePNG = function(outputFolderStr, filename) {
         file = new File(this.settings["tempDir"] + "/" + this.settings["baseFileName"] + ".png");
         activeDocument.exportDocument(file, ExportType.SAVEFORWEB, opts);}
 
-Doc.prototype.saveIMG = function() {
-    switch(this.format) {
-        case "jpg":
-            this.saveJPG()
-            break;
-        case "png":
-            this.savePNG()
-            break;
+
+
+//
+// Previz Class
+//
+
+function Previz(format) {
+    this.system = new System()
+    this.platform = this.system.platform()
+
+    // User settings
+    this.settings = {
+        "title":"Presentacion",
+        "dropboxiMacFolder": "/Volumes/Bucanero/Dropbox\ \(Secuoyas\)/Public/sandbox2/",
+        "dropboxWinFolder": "/",
+        "tempDir": "",
+        "tempSystemDir": Folder.temp.fsName+"/",
+        "jpgQuality":80,
+        "baseFileName":"previz",
+        "format":"jpg",
+        "ext":""
+    }
+
+    // New Photoshop doc with settings
+    this.doc = new Doc(this.settings)
+}
+
+
+// methods
+
+Previz.prototype.setTempDir = function() {
+    if (this.platform == "osx") {
+        this.settings["tempDir"] = this.settings["dropboxiMacFolder"]
+    } else {
+        this.settings["tempDir"] = this.settings["dropboxWinFolder"]
     }
 }
 
-Doc.prototype.writeScriptFile = function() {
+Previz.prototype.writeScriptFile = function() {
     if (this.platform == "osx") {
         var f = new File(this.settings["tempDir"] + this.settings["baseFileName"] + ".sh")
         f.open("w")
@@ -115,7 +139,7 @@ Doc.prototype.writeScriptFile = function() {
     }
 }
 
-Doc.prototype.writeHTMLFile = function() {
+Previz.prototype.writeHTMLFile = function() {
     var f = new File(this.settings["tempDir"] + this.settings["baseFileName"] + ".html");
     var width = app.activeDocument.width.as('px');
     var height = app.activeDocument.height.as('px');
@@ -140,7 +164,7 @@ Doc.prototype.writeHTMLFile = function() {
             div {\
                 height:' + height + 'px;\
                 margin:0 auto;\
-                background:url("' + this.settings["baseFileName"] + "." + this.format + '") top center no-repeat;\
+                background:url("' + this.settings["baseFileName"] + "." + this.settings["format"] + '") top center no-repeat;\
             }\
         </style>\
         </head>\
@@ -154,7 +178,7 @@ Doc.prototype.writeHTMLFile = function() {
     f.close();
 }
 
-Doc.prototype.launch = function() {
+Previz.prototype.launch = function() {
         if (this.platform == "win") {
             var checkout = new File(this.settings["tempDir"] + this.settings["baseFileName"] + ".vbs");
             checkout.execute();
@@ -165,42 +189,40 @@ Doc.prototype.launch = function() {
         }
 }
 
-Doc.prototype.setTempDir = function() {
-    if (this.platform == "osx") {
-        this.settings["tempDir"] = this.settings["dropboxiMacFolder"]
-    } else {
-        this.settings["tempDir"] = this.settings["dropboxWinFolder"]
-    }
-}
-
-Doc.prototype.previz = function() {
+Previz.prototype.go = function() {
     
-    this.system = new System()
-    this.platform = this.system.platform()
+    if (this.doc.isOpen()) {
 
-    try {
+        // Get system
+        this.platform = new System().platform()        
 
         // Set correct temp dir
         this.setTempDir()
 
         // Image file export
-        this.saveIMG()
+        this.doc.saveIMG()
 
-        // Script file creation
+        // // Script file creation
         this.writeScriptFile()
 
-        // HTML file creation
+        // // HTML file creation
         this.writeHTMLFile()
 
-        // Launch html with .sh/.bat
+        // // Launch html with .sh/.bat
         this.launch()
 
-    } catch(e) {
-        alert ("error")
+    } else {
+        alert ("No hay documento abierto")
     }
 }
 
 
 // Main
-var doc = new Doc("jpg").previz()
+var previz = new Previz("jpg").go()
+
+
+
+
+
+
 
