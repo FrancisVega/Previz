@@ -4,15 +4,12 @@
 //
 
 
-//
-// System Class
-//
-
+// System
+// Class
 function System() { }
 
-
-// methods
-System.prototype.platform = function() {
+// Methods
+System.prototype.os = function() {
     if (Folder.system == "/System") {
         return "osx"
     } else {
@@ -33,27 +30,21 @@ System.prototype.writeFile = function(filePath, str) {
 
 System.prototype.wich = function() {
     if (Folder("C:/Users").exists) {
-        alert("Estoy en el trabajo")
         return "work"
     } else {
         return "home"
     }
-};
-
-//
-// Photoshop Doc Class
-//
-
-function Doc(settings) {
-    // User settings
-    this.settings = settings
-    this.system = new System()
-
 }
 
 
-// methods
+// Photoshop Doc
+// Class
+function Doc(settings) {
+    // Dictionarty of settings
+    this.settings = settings
+}
 
+// Methods
 Doc.prototype.isOpen = function() {
     if(app.documents.length==0)
         return false
@@ -77,7 +68,7 @@ Doc.prototype.saveJPG = function() {
         opts.format = SaveDocumentType.JPEG;
         opts.includeProfile = false ;
         opts.quality = this.settings["jpgQuality"];
-        file = new File(this.settings["tempDir"] + "/" + this.settings["baseFileName"] + ".jpg");
+        file = new File(this.settings["path"] + "/" + this.settings["baseFileName"] + ".jpg");
         activeDocument.exportDocument(file, ExportType.SAVEFORWEB, opts);
 }
 
@@ -92,73 +83,50 @@ Doc.prototype.savePNG = function(outputFolderStr, filename) {
         opts.optimized = true
         opts.quality = 100
         opts.PNG8 = false
-        file = new File(this.settings["tempDir"] + "/" + this.settings["baseFileName"] + ".png");
+        file = new File(this.settings["path"] + "/" + this.settings["baseFileName"] + ".png");
         activeDocument.exportDocument(file, ExportType.SAVEFORWEB, opts);
 }
 
-
-
-//
-// Previz Class
-//
-
-function Previz(format) {
-    this.system = new System()
-    this.platform = this.system.platform()
+// Previz
+// Class
+function Previz(path, format) {
 
     // User settings
     this.settings = {
         "title":"Presentacion",
-        "dropboxHomeFolder": "/Volumes/Bucanero/Dropbox\ \(Secuoyas\)/Public/sandbox2/",
-        "dropboxWorkFolder": "/",
-        "tempDir": "",
-        "tempSystemDir": Folder.temp.fsName+"/",
-        "jpgQuality":80,
         "baseFileName":"previz",
-        "format":"jpg",
-        "ext":""
+        "path":path,
+        "format":format,
+        "jpgQuality":100
     }
 
-    // New Photoshop doc with settings
-    this.doc = new Doc(this.settings)
 }
 
-
-// methods
-
-Previz.prototype.setTempDir = function() {
-    var mySystem = new System()
-    var computer = mySystem.wich()
-
-    if (computer == "home") {
-    if ()
-        this.settings["tempDir"] = this.settings["dropboxHomeFolder"]
-    } else {
-        this.settings["tempDir"] = this.settings["dropboxWorkFolder"]
-    }
-
+// Methods
+Previz.prototype.setpath = function() {
     // Construct file paths
-    this.baseFilePath = this.settings["tempDir"] + this.settings["baseFileName"]
-    this.shFile = this.baseFilePath + ".sh"
-    this.htmlFile = this.baseFilePath + ".html"
-    this.imageFile = this.baseFilePath + this.settings["format"]
-    this.batFile = this.baseFilePath + ".bat"
-    this.vbsFile = this.baseFilePath + ".vbs"
+    var baseFilePath = this.settings["path"] + this.settings["baseFileName"]
+    this.shFile = baseFilePath + ".sh"
+    this.htmlFile = baseFilePath + ".html"
+    this.imageFile = baseFilePath + this.settings["format"]
+    this.batFile = baseFilePath + ".bat"
+    this.vbsFile = baseFilePath + ".vbs"
 }
 
 Previz.prototype.writeScriptFile = function() {
-    if (this.platform == "osx") {
-        mySystem.writeFile( this.shFile, "open " + this.htmlFile )
+
+    if (MY_COMPUTER == "home") {
+        MY_SYSTEM.writeFile( this.shFile, "open " + this.htmlFile )
     }
 
-    if (this.platform == "win") {
-        mySystem.writeFile( this.batFile, "@echo off\nstart " + this.htmlFile )
-        mySystem.writeFile( this.vbsFile, 'CreateObject("Wscript.Shell").Run "'+ this.batFile +'", 0, True' )
+    if (MY_COMPUTER == "work") {
+        MY_SYSTEM.writeFile( this.batFile, "@echo off\nstart " + this.htmlFile )
+        MY_SYSTEM.writeFile( this.vbsFile, 'CreateObject("Wscript.Shell").Run "'+ this.batFile +'", 0, True' )
     }
 }
 
 Previz.prototype.writeHTMLFile = function() {
-    var f = new File(this.settings["tempDir"] + this.settings["baseFileName"] + ".html");
+    var f = new File(this.settings["path"] + this.settings["baseFileName"] + ".html");
     var width = app.activeDocument.width.as('px');
     var height = app.activeDocument.height.as('px');
     var html_file =
@@ -197,28 +165,31 @@ Previz.prototype.writeHTMLFile = function() {
 }
 
 Previz.prototype.launch = function() {
-        if (this.platform == "win") {
-            var checkout = new File(this.settings["tempDir"] + this.settings["baseFileName"] + ".vbs");
+
+        if (MY_COMPUTER == "work") {
+            var checkout = new File(this.settings["path"] + this.settings["baseFileName"] + ".vbs");
             checkout.execute();
-        } else {
-            //var checkout = new File(Settings["tempDir"] + Settings["baseFileName"] + ".sh");
-            var checkout = new File(this.settings["tempDir"] + this.settings["baseFileName"] + ".html");
+        }
+
+        if (MY_COMPUTER == "home") {
+            //var checkout = new File(Settings["path"] + Settings["baseFileName"] + ".sh");
+            var checkout = new File(this.settings["path"] + this.settings["baseFileName"] + ".html");
             var k = checkout.execute();
         }
 }
 
 Previz.prototype.go = function() {
 
-    if (this.doc.isOpen()) {
+    // New Photoshop doc with settings
+    var doc = new Doc(this.settings)
 
-        // Get system
-        this.platform = new System().platform()
+    if (doc.isOpen()) {
 
-        // Set correct (os related) temp dir and file paths
-        this.setTempDir()
+        // Set correct (OS related) temp dir and file paths
+        this.setpath()
 
         // Image file export
-        this.doc.saveIMG()
+        doc.saveIMG()
 
         // // Script file creation
         this.writeScriptFile()
@@ -234,6 +205,14 @@ Previz.prototype.go = function() {
     }
 }
 
+// Main
+// Globals
+var DESTINATION_PATH = Folder.temp.fsName + "/"
+//var DESTINATION_PATH = "/Volumes/Bucanero/Dropbox (Secuoyas)/Public/"
+var FORMAT = "jpg"
+var MY_SYSTEM = new System()
+var MYOS = MY_SYSTEM.os()
+var MY_COMPUTER = MY_SYSTEM.wich()
 
 // Main
-var previz = new Previz("jpg").go()
+var previz = new Previz(DESTINATION_PATH, FORMAT).go()
