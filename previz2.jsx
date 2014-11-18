@@ -208,7 +208,6 @@ Previz.prototype.go = function() {
 // Main
 // Globals
 var DESTINATION_PATH = Folder.temp.fsName + "/"
-//var DESTINATION_PATH = "/Volumes/Bucanero/Dropbox (Secuoyas)/Public/"
 var FORMAT = "jpg"
 var MY_SYSTEM = new System()
 var MYOS = MY_SYSTEM.os()
