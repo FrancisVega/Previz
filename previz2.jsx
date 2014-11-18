@@ -29,10 +29,10 @@ System.prototype.writeFile = function(filePath, str) {
 }
 
 System.prototype.wich = function() {
-    if (Folder("C:/Users").exists) {
-        return "work"
-    } else {
+    if (Folder("/var").exists) {
         return "home"
+    } else {
+        return "work"
     }
 }
 
