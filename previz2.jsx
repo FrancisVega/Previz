@@ -172,9 +172,12 @@ Previz.prototype.launch = function() {
         }
 
         if (MY_COMPUTER == "home") {
-            //var checkout = new File(Settings["path"] + Settings["baseFileName"] + ".sh");
-            var checkout = new File(this.settings["path"] + this.settings["baseFileName"] + ".html");
-            var k = checkout.execute();
+            // Html file
+            var htmlFile = this.settings["path"] + this.settings["baseFileName"] + ".html"
+            // Apple quarantine
+            app.system('xattr -w com.apple.quarantine "0000;4b3a40d0;Safari;|com.apple.Safari" ' + htmlFile)
+            var checkout = new File(htmlFile);
+            checkout.execute();
         }
 }
 
